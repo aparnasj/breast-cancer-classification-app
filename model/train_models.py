@@ -76,3 +76,54 @@ X_test_scaled = scaler.transform(X_test)
 with open(os.path.join(HERE, "scaler.pkl"), "wb") as f:
     pickle.dump(scaler, f)
 
+# ---------------------------------------------------------------
+# Step 4: Define the 5 required models
+# ---------------------------------------------------------------
+models = {
+    "Logistic Regression": LogisticRegression(max_iter=5000, random_state=RANDOM_STATE),
+    "Decision Tree": DecisionTreeClassifier(random_state=RANDOM_STATE),
+    "kNN": KNeighborsClassifier(n_neighbors=5),
+    "Naive Bayes": GaussianNB(),
+    "Random Forest (Ensemble)": RandomForestClassifier(n_estimators=200, random_state=RANDOM_STATE),
+}
+
+# Models that need scaled features (distance / gradient based)
+SCALED_MODELS = {"Logistic Regression", "kNN"}
+
+results = []
+
+for name, model in models.items():
+    if name in SCALED_MODELS:
+        model.fit(X_train_scaled, y_train)
+        y_pred = model.predict(X_test_scaled)
+        y_proba = model.predict_proba(X_test_scaled)[:, 1]
+    else:
+        model.fit(X_train, y_train)
+        y_pred = model.predict(X_test)
+        y_proba = model.predict_proba(X_test)[:, 1]
+
+    metrics = {
+        "ML Model Name": name,
+        "Accuracy": round(accuracy_score(y_test, y_pred), 4),
+        "AUC": round(roc_auc_score(y_test, y_proba), 4),
+        "Precision": round(precision_score(y_test, y_pred), 4),
+        "Recall": round(recall_score(y_test, y_pred), 4),
+        "F1": round(f1_score(y_test, y_pred), 4),
+        "MCC": round(matthews_corrcoef(y_test, y_pred), 4),
+    }
+    results.append(metrics)
+
+    # Save trained model
+    fname = name.lower().replace(" ", "_").replace("(", "").replace(")", "") + ".pkl"
+    with open(os.path.join(HERE, fname), "wb") as f:
+        pickle.dump(model, f)
+
+    print(f"\n{name}: {metrics}")
+
+# ---------------------------------------------------------------
+# Step 5: Save comparison table
+# ---------------------------------------------------------------
+results_df = pd.DataFrame(results)
+results_df.to_csv(os.path.join(HERE, "metrics_comparison.csv"), index=False)
+print("\n===== Final Comparison Table =====")
+print(results_df.to_string(index=False))
