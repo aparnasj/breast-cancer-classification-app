@@ -66,3 +66,13 @@ test_df["target"] = y_test.values
 test_df.to_csv(os.path.join(ROOT, "test_data.csv"), index=False)
 print(f"\nSaved test_data.csv with shape {test_df.shape}")
 
+# ---------------------------------------------------------------
+# Step 3: Feature scaling (needed for Logistic Regression / kNN)
+# ---------------------------------------------------------------
+scaler = StandardScaler()
+X_train_scaled = scaler.fit_transform(X_train)
+X_test_scaled = scaler.transform(X_test)
+
+with open(os.path.join(HERE, "scaler.pkl"), "wb") as f:
+    pickle.dump(scaler, f)
+
